@@ -3,4 +3,5 @@ vendor
 .DS_Store
 .deptrac.cache
 .phpcs-cache
+tools
 

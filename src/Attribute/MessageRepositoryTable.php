@@ -6,18 +6,14 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_CLASS)]
-final class AggregateRoot
+#[Attribute(Attribute::TARGET_PARAMETER)]
+final class MessageRepositoryTable
 {
-    /** @param class-string $baseClass */
     public function __construct(
-        public readonly string $messageTable,
+        public readonly string|null $table = null,
         public readonly string $database = 'default',
-        public readonly string|null $name = null,
         public readonly bool $useOutbox = false,
         public readonly string $outboxTableName = 'message_outbox',
-        public readonly string|null $idClass = null,
-        public readonly string|null $repoClass = null,
     ) {
     }
 }

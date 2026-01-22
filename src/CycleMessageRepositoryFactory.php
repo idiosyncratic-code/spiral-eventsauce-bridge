@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge;
 
+use Cycle\Database\DatabaseInterface;
 use Cycle\Database\DatabaseProviderInterface;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
-use EventSauce\IdEncoding\BinaryUuidIdEncoder;
 use EventSauce\IdEncoding\IdEncoder;
+use EventSauce\IdEncoding\StringIdEncoder;
+use EventSauce\MessageOutbox\OutboxRepository;
 use EventSauce\MessageRepository\TableSchema\DefaultTableSchema;
 use EventSauce\MessageRepository\TableSchema\TableSchema;
-use Idiosyncratic\EventSauce\Cycle\CycleMessageRepository;
-use Spiral\Core\Attribute\Singleton;
 
 use function sprintf;
 
-#[Singleton]
 final class CycleMessageRepositoryFactory
 {
     private readonly TableSchema $tableSchema;
@@ -36,27 +35,57 @@ final class CycleMessageRepositoryFactory
         IdEncoder|null $eventIdEncoder = null,
     ) {
         $this->tableSchema = $tableSchema ?? new DefaultTableSchema();
-        $this->aggregateRootIdEncoder = $aggregateRootIdEncoder ?? new BinaryUuidIdEncoder();
+        $this->aggregateRootIdEncoder = $aggregateRootIdEncoder ?? new StringIdEncoder();
         $this->eventIdEncoder = $eventIdEncoder ?? $this->aggregateRootIdEncoder;
     }
 
     public function makeMessageRepository(
         string $db,
         string $table,
-    ) : CycleMessageRepository {
+        bool $useOutbox,
+        string $outboxTableName,
+    ) : CycleMessageRepository|CycleTransactionalMessageRepository {
         $repositoryKey = sprintf('%s_%s', $db, $table);
 
         if (isset($this->repositories[$repositoryKey])) {
             return $this->repositories[$repositoryKey];
         }
 
-        return $this->repositories[$repositoryKey] = new CycleMessageRepository(
-            table: $this->dbProvider->database($db)->table(sprintf('%s_event_store', $table)),
+        $database = $this->dbProvider->database($db);
+
+        $repository = new CycleMessageRepository(
+            table: $database->table(sprintf('%s_event_store', $table)),
             serializer: $this->serializer,
             jsonEncodeOptions: $this->jsonEncodeOptions,
             tableSchema: $this->tableSchema,
             aggregateRootIdEncoder: $this->aggregateRootIdEncoder,
             eventIdEncoder: $this->eventIdEncoder,
+        );
+
+        if ($useOutbox === true) {
+            $repository = new CycleTransactionalMessageRepository(
+                $database,
+                $repository,
+                $this->makeOutboxRepository(
+                    $database,
+                    $outboxTableName,
+                    $this->serializer,
+                ),
+            );
+        }
+
+        return $this->repositories[$repositoryKey] = $repository;
+    }
+
+    private function makeOutboxRepository(
+        DatabaseInterface $database,
+        string $outboxTableName,
+        MessageSerializer $serializer,
+    ) : OutboxRepository {
+        return new CycleOutboxRepository(
+            $database,
+            $database->table($outboxTableName)->getName(),
+            $serializer,
         );
     }
 }
