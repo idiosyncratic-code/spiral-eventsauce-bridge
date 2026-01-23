@@ -25,16 +25,18 @@ final class EventSauceConfig extends InjectableConfig
         'idClassMap' => [],
         'dispatchers' => [],
         'aggregateRoots' => [],
+        'useOutbox' => false,
+        'outboxTableName' => 'message_outbox',
     ];
 
     /** @return array<class-string, string|array<string>> */
-    public function getEventClassMap() : array
+    public function eventClassMap() : array
     {
         return $this->config['eventClassMap'];
     }
 
     /** @return array<class-string, string> */
-    public function getIdClassMap() : array
+    public function idClassMap() : array
     {
         return $this->config['idClassMap'];
     }
@@ -44,7 +46,7 @@ final class EventSauceConfig extends InjectableConfig
      *      consumers: array<class-string>,
      *  }}
      */
-    public function getAggregateRoots() : array
+    public function aggregateRoots() : array
     {
         return $this->config['aggregateRoots'];
     }
@@ -54,7 +56,7 @@ final class EventSauceConfig extends InjectableConfig
      *      consumers: array<class-string>,
      *  }}
      */
-    public function getDispatchers() : array
+    public function dispatchers() : array
     {
         return $this->config['dispatchers'];
     }
@@ -64,9 +66,20 @@ final class EventSauceConfig extends InjectableConfig
      *      consumers: array<class-string>,
      *  }
      */
-    public function getDispatcher(
+    public function dispatcher(
         string $name,
     ) : array {
         return $this->config['dispatchers'][$name];
     }
+
+    public function useOutbox() : bool
+    {
+        return $this->config['useOutbox'];
+    }
+
+    public function outboxTableName() : string
+    {
+        return $this->config['outboxTableName'];
+    }
+
 }

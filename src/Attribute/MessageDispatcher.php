@@ -6,7 +6,7 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final class MessageDispatcher
 {
     public function __construct(

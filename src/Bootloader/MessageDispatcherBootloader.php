@@ -60,15 +60,9 @@ final class MessageDispatcherBootloader extends Bootloader implements InjectorIn
         $config = $this->container->get(EventSauceConfig::class);
 
         foreach ($dispatcherNames as $dispatcherName) {
-            $dispatcher = $config->getDispatcher($dispatcherName);
+            $dispatcher = $config->dispatcher($dispatcherName);
 
-            $consumers = [];
-
-            foreach ($dispatcher['consumers'] as $consumer) {
-                $consumers[] = $this->container->get($consumer);
-            }
-
-            $dispatchers[] = $dispatcher['config']->create($this->container, ...$consumers);
+            $dispatchers[] = $dispatcher['config']::create($this->container, $dispatcher['parameters'], $dispatcher['consumers']);
         }
 
         if (count($dispatchers) > 1) {

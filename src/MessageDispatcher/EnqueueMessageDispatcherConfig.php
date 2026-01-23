@@ -9,21 +9,59 @@ use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
 use Psr\Container\ContainerInterface;
+use RuntimeException;
 
-final class EnqueueMessageDispatcherConfig extends MessageDispatcherConfig
+final class EnqueueMessageDispatcherConfig implements AsyncMessageDispatcherConfig
 {
-    /** @param array<string, mixed> $config */
-    public function __construct(
-        private readonly array $config,
-        private readonly string $destination,
-    ) {
+    public static function createProducer(
+        ContainerInterface $container,
+        array $config,
+    ) : MessageDispatcher {
+        /*
+        $consumerInstances = [];
+
+        foreach ($consumers as $consumerClass) {
+            $consumerInstances = $container->get($consumerClass);
+        }
+         */
+        $destination = $config['destination'] ?? null;
+
+        if ($destination === null) {
+            throw new RuntimeException("No destination provided");
+        }
+
+        unset($config['destination']);
+
+        $context = (new ConnectionFactoryFactory())->create($config)->createContext();
+
+        return new EnqueueMessageDispatcher(
+            $container->get(MessageSerializer::class),
+            $context,
+            $context->createTopic($destination),
+        );
     }
 
-    public function create(
+    public static function createConsumer(
         ContainerInterface $container,
-        MessageConsumer ...$consumers,
+        array $config,
+        array $consumers,
     ) : MessageDispatcher {
-        $context = (new ConnectionFactoryFactory())->create($this->config)->createContext();
+        /*
+        $consumerInstances = [];
+
+        foreach ($consumers as $consumerClass) {
+            $consumerInstances = $container->get($consumerClass);
+        }
+         */
+        $destination = $config['destination'] ?? null;
+
+        if ($destination === null) {
+            throw new RuntimeException("No destination provided");
+        }
+
+        unset($config['destination']);
+
+        $context = (new ConnectionFactoryFactory())->create($config)->createContext();
 
         return new EnqueueMessageDispatcher(
             $container->get(MessageSerializer::class),

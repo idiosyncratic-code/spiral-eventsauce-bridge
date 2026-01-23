@@ -8,9 +8,14 @@ use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
 use Psr\Container\ContainerInterface;
 
-interface MessageDispatcherConfig
+interface AsyncMessageDispatcherConfig
 {
-    public static function create(
+    public static function createProducer(
+        ContainerInterface $container,
+        array $config,
+    ) : MessageDispatcher;
+
+    public static function createConsumer(
         ContainerInterface $container,
         array $config,
         array $consumers,

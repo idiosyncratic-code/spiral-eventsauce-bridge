@@ -9,12 +9,18 @@ use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\SynchronousMessageDispatcher;
 use Psr\Container\ContainerInterface;
 
-final class SyncMessageDispatcherConfig extends MessageDispatcherConfig
+final class SyncMessageDispatcherConfig implements MessageDispatcherConfig
 {
-    public function create(
+    public static function create(
         ContainerInterface $container,
-        MessageConsumer ...$consumers,
+        array $config,
+        array $consumers,
     ) : MessageDispatcher {
-        return new SynchronousMessageDispatcher(...$consumers);
+        $instances = [];
+
+        foreach ($consumers as $consumer) {
+            $instances[] = $container->get($consumer);
+        }
+        return new SynchronousMessageDispatcher(...$instances);
     }
 }

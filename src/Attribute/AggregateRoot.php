@@ -14,8 +14,6 @@ final class AggregateRoot
         public readonly string $messageTable,
         public readonly string $database = 'default',
         public readonly string|null $name = null,
-        public readonly bool $useOutbox = false,
-        public readonly string $outboxTableName = 'message_outbox',
         public readonly string|null $idClass = null,
         public readonly string|null $repoClass = null,
     ) {

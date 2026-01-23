@@ -12,6 +12,7 @@ use EventSauce\EventSourcing\MessageDecorator;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\ChainClassNameInflector;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
+use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatcherConfig;
 use Spiral\Boot\Attribute\BindMethod;
 use Spiral\Boot\Attribute\BootMethod;
 use Spiral\Boot\Bootloader\Bootloader;
@@ -26,7 +27,7 @@ final class EventSauceBootloader extends Bootloader
     ) : ClassNameInflector {
         return new ChainClassNameInflector(
             new ExplicitlyMappedClassNameInflector(
-                array_merge($config->getEventClassMap(), $config->getIdClassMap()),
+                array_merge($config->eventClassMap(), $config->idClassMap()),
             ),
             new DotSeparatedSnakeCaseInflector(),
         );
@@ -37,9 +38,18 @@ final class EventSauceBootloader extends Bootloader
         EventSauceConfig $config,
         AggregateRootRepositoryFactory $repoFactory,
     ) : void {
-        foreach ($config['aggregateRoots'] as $root => $rootConfig) {
+        foreach ($config->aggregateRoots() as $root => $rootConfig) {
             if (class_exists($rootConfig['repositoryClass'])) {
                 continue;
+            }
+
+            if ($config->useOutbox() === true) {
+                $dispatchers = [];
+                foreach ($rootConfig['dispatchers'] as $dispatcher) {
+                    if (is_subclass_of($config->dispatcher($dispatcher)['config'], AsyncMessageDispatcherConfig::class) === false) {
+                        $dispatchers[] = $dispatcher;
+                    }
+                }
             }
 
             $repoFactory->generateRepositoryClass(
@@ -48,9 +58,9 @@ final class EventSauceBootloader extends Bootloader
                 $rootConfig['messageTable'],
                 $rootConfig['database'],
                 $root,
-                $rootConfig['useOutbox'],
-                $rootConfig['outboxTableName'],
-                $rootConfig['dispatchers'],
+                $config->useOutbox(),
+                $config->outboxTableName(),
+                $dispatchers,
                 $rootConfig['decorators'],
             );
         }

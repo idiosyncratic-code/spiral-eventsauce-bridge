@@ -9,7 +9,7 @@ use EventSauce\EventSourcing\AggregateRootId;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\AggregateRoot as AggregateRootAttribute;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDecorator;
-use Idiosyncratic\Spiral\EventSauceBridge\Attribute\RepositoryDispatcher;
+use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDispatcher;
 use Idiosyncratic\Spiral\EventSauceBridge\Bootloader\EventSauceConfigBootloader;
 use ReflectionClass;
 use Spiral\Attributes\ReaderInterface;
@@ -21,6 +21,8 @@ use function sprintf;
 #[TargetAttribute(AggregateRootAttribute::class)]
 final class AggregateRootListener implements TokenizationListenerInterface
 {
+    private array $aggregateRoots = [];
+
     public function __construct(
         private readonly ReaderInterface $reader,
         private readonly EventSauceConfigBootloader $config,
@@ -53,11 +55,9 @@ final class AggregateRootListener implements TokenizationListenerInterface
             'messageTable' => $aggregateMetadata->messageTable,
             'dispatchers' => [],
             'decorators' => [],
-            'useOutbox' => $aggregateMetadata->useOutbox,
-            'outboxTableName' => $aggregateMetadata->outboxTableName,
         ];
 
-        $dispatcherMetadata = $this->reader->getClassMetadata($class, RepositoryDispatcher::class);
+        $dispatcherMetadata = $this->reader->getClassMetadata($class, MessageDispatcher::class);
 
         $decoratorMetadata = $this->reader->getClassMetadata($class, MessageDecorator::class);
 
@@ -69,10 +69,13 @@ final class AggregateRootListener implements TokenizationListenerInterface
             $config['decorators'][] = $decorator->name;
         }
 
-        $this->config->registerAggregateRoot($class->getName(), $config);
+        $this->aggregateRoots[$class->getName()] = $config;
     }
 
     public function finalize() : void
     {
+        foreach ($this->aggregateRoots as $className => $config) {
+            $this->config->registerAggregateRoot($className, $config);
+        }
     }
 }
