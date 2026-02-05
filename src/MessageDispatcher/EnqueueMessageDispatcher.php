@@ -11,8 +11,12 @@ use Interop\Queue\Context;
 use Interop\Queue\Destination;
 use Interop\Queue\Producer;
 
+use function array_map;
 use function json_decode;
 use function json_encode;
+use function sprintf;
+
+use const JSON_OBJECT_AS_ARRAY;
 
 final class EnqueueMessageDispatcher implements MessageDispatcher
 {
@@ -30,11 +34,34 @@ final class EnqueueMessageDispatcher implements MessageDispatcher
         Message ...$messages,
     ) : void {
         foreach ($messages as $message) {
-            $serializedMessage = json_decode(json_encode($this->serializer->serializeMessage($message)));
+            $serializedMessage = json_decode(
+                json: json_encode($this->serializer->serializeMessage($message)),
+                flags: JSON_OBJECT_AS_ARRAY,
+            );
+
+            $message = $this->context->createMessage(
+                json_encode($serializedMessage['payload']),
+                [],
+            );
+
+            $messageAttributes = array_map(static function ($attribute) {
+                return [
+                    'DataType' => 'String',
+                    'StringValue' => (string) $attribute,
+                ];
+            }, $serializedMessage['headers']);
+
+            $message->setMessageAttributes($messageAttributes);
+
+            $message->setMessageGroupId(sprintf(
+                '%s-%s',
+                $serializedMessage['headers']['__aggregate_root_type'],
+                $serializedMessage['headers']['__aggregate_root_id'],
+            ));
 
             $this->producer->send(
                 $this->destination,
-                $this->context->createMessage($serializedMessage->payload->to_payload, [], $serializedMessage->headers),
+                $message,
             );
         }
     }

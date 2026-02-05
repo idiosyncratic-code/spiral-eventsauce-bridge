@@ -7,20 +7,13 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher;
 use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\SynchronousMessageDispatcher;
-use Psr\Container\ContainerInterface;
 
 final class SyncMessageDispatcherConfig implements MessageDispatcherConfig
 {
-    public static function create(
-        ContainerInterface $container,
-        array $config,
+    /** @param array<MessageConsumer> $consumers */
+    public function create(
         array $consumers,
     ) : MessageDispatcher {
-        $instances = [];
-
-        foreach ($consumers as $consumer) {
-            $instances[] = $container->get($consumer);
-        }
-        return new SynchronousMessageDispatcher(...$instances);
+        return new SynchronousMessageDispatcher(...$consumers);
     }
 }

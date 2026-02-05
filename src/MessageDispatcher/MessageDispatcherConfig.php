@@ -6,13 +6,11 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher;
 
 use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
-use Psr\Container\ContainerInterface;
 
 interface MessageDispatcherConfig
 {
-    public static function create(
-        ContainerInterface $container,
-        array $config,
+    /** @param array<MessageConsumer> $consumers */
+    public function create(
         array $consumers,
     ) : MessageDispatcher;
 }

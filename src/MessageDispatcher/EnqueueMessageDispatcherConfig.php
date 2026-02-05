@@ -8,65 +8,59 @@ use Enqueue\ConnectionFactoryFactory;
 use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
-use Psr\Container\ContainerInterface;
-use RuntimeException;
 
 final class EnqueueMessageDispatcherConfig implements AsyncMessageDispatcherConfig
 {
-    public static function createProducer(
-        ContainerInterface $container,
-        array $config,
+    public function __construct(
+        private readonly string $destination,
+        private readonly string $dsn,
+        private readonly string $awsKey,
+        private readonly string $awsSecret,
+        private readonly string $region,
+        private readonly string $endpoint,
+    ) {
+    }
+
+    public function createProducer(
+        MessageSerializer $serializer,
     ) : MessageDispatcher {
-        /*
-        $consumerInstances = [];
+        $context = (new ConnectionFactoryFactory())->create([
+            'dsn' => $this->dsn,
+            'key' => $this->awsKey,
+            'secret' => $this->awsSecret,
+            'region' => $this->region,
+            'endpoint' => $this->endpoint,
+        ])->createContext();
 
-        foreach ($consumers as $consumerClass) {
-            $consumerInstances = $container->get($consumerClass);
-        }
-         */
-        $destination = $config['destination'] ?? null;
+        $destination = $context->createTopic($this->destination);
 
-        if ($destination === null) {
-            throw new RuntimeException("No destination provided");
-        }
+        $destination->setFifoTopic(true);
 
-        unset($config['destination']);
-
-        $context = (new ConnectionFactoryFactory())->create($config)->createContext();
+        $destination->setContentBasedDeduplication(true);
 
         return new EnqueueMessageDispatcher(
-            $container->get(MessageSerializer::class),
+            $serializer,
             $context,
-            $context->createTopic($destination),
+            $destination,
         );
     }
 
-    public static function createConsumer(
-        ContainerInterface $container,
-        array $config,
+    /** @param array<MessageConsumer> $consumers */
+    public function createConsumer(
         array $consumers,
     ) : MessageDispatcher {
-        /*
-        $consumerInstances = [];
-
-        foreach ($consumers as $consumerClass) {
-            $consumerInstances = $container->get($consumerClass);
-        }
-         */
-        $destination = $config['destination'] ?? null;
-
-        if ($destination === null) {
-            throw new RuntimeException("No destination provided");
-        }
-
-        unset($config['destination']);
-
-        $context = (new ConnectionFactoryFactory())->create($config)->createContext();
+        $context = (new ConnectionFactoryFactory())->create([
+            'dsn' => $this->dsn,
+            'key' => $this->awsKey,
+            'secret' => $this->awsSecret,
+            'region' => $this->region,
+            'endpoint' => $this->endpoint,
+        ])->createContext();
 
         return new EnqueueMessageDispatcher(
             $container->get(MessageSerializer::class),
             $context,
-            $context->createTopic($destination),
+            $context->createTopic($this->destination),
         );
     }
 }
