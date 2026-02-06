@@ -69,7 +69,10 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
         );
     }
 
-    /** @param class-string $aggregateClassName */
+    /**
+     * @param class-string $aggregateClassName
+     * @param array<string, mixed> $config
+     */
     public function registerAggregateRoot(
         string $className,
         array $config,
@@ -83,5 +86,4 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
             ),
         );
     }
-
 }

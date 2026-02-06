@@ -6,7 +6,6 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\Listener;
 
 use EventSauce\EventSourcing\AggregateRoot;
 use EventSauce\EventSourcing\AggregateRootId;
-use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\AggregateRoot as AggregateRootAttribute;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDecorator;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDispatcher;
@@ -21,6 +20,7 @@ use function sprintf;
 #[TargetAttribute(AggregateRootAttribute::class)]
 final class AggregateRootListener implements TokenizationListenerInterface
 {
+    /** @var array<string, mixed> */
     private array $aggregateRoots = [];
 
     public function __construct(

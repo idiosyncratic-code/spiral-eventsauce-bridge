@@ -42,8 +42,7 @@ final class CycleMessageRepositoryFactory
     public function makeMessageRepository(
         string $db,
         string $table,
-        bool $useOutbox,
-        string $outboxTableName,
+        OutboxRepository|null $outboxRepository,
     ) : CycleMessageRepository|CycleTransactionalMessageRepository {
         $repositoryKey = sprintf('%s_%s', $db, $table);
 
@@ -62,15 +61,11 @@ final class CycleMessageRepositoryFactory
             eventIdEncoder: $this->eventIdEncoder,
         );
 
-        if ($useOutbox === true) {
+        if ($outboxRepository !== null) {
             $repository = new CycleTransactionalMessageRepository(
                 $database,
                 $repository,
-                $this->makeOutboxRepository(
-                    $database,
-                    $outboxTableName,
-                    $this->serializer,
-                ),
+                $outboxRepository,
             );
         }
 

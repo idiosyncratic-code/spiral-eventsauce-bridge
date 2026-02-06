@@ -5,22 +5,34 @@ declare(strict_types=1);
 namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 
 use EventSauce\EventSourcing\ClassNameInflector;
-use EventSauce\EventSourcing\DefaultHeadersDecorator;
 use EventSauce\EventSourcing\DotSeparatedSnakeCaseInflector;
 use EventSauce\EventSourcing\ExplicitlyMappedClassNameInflector;
-use EventSauce\EventSourcing\MessageDecorator;
+use EventSauce\MessageOutbox\RelayMessages;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\ChainClassNameInflector;
+use Idiosyncratic\Spiral\EventSauceBridge\Console\OutboxRelayCommand;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatcherConfig;
+use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
 use Spiral\Boot\Attribute\BindMethod;
 use Spiral\Boot\Attribute\BootMethod;
+use Spiral\Boot\Attribute\InitMethod;
 use Spiral\Boot\Bootloader\Bootloader;
+use Spiral\Console\Bootloader\ConsoleBootloader;
 
+use function array_filter;
 use function array_merge;
+use function class_exists;
 
 final class EventSauceBootloader extends Bootloader
 {
+    #[InitMethod]
+    public function registerCommands(
+        ConsoleBootloader $console,
+    ) : void {
+        $console->addCommand(OutboxRelayCommand::class);
+    }
+
     #[BindMethod]
     public function createClassNameInflector(
         EventSauceConfig $config,
@@ -33,6 +45,21 @@ final class EventSauceBootloader extends Bootloader
         );
     }
 
+    #[BindMethod]
+    public function createRelayMessages(
+        EventSauceConfig $config,
+    ) : RelayMessages {
+        $dispatchers = [];
+
+        foreach ($config['dispatchers'] as $dispatcher) {
+            if (! $config->dispatcher($dispatcher)['driver'] instanceof AsyncMessageDispatcherConfig) {
+                continue;
+            }
+
+            $dispatchers[] = $dispatcher;
+        }
+    }
+
     #[BootMethod]
     public function generateRepositoryClasses(
         EventSauceConfig $config,
@@ -43,26 +70,38 @@ final class EventSauceBootloader extends Bootloader
                 continue;
             }
 
-            if ($config->useOutbox() === true) {
-                $dispatchers = [];
-                foreach ($rootConfig['dispatchers'] as $dispatcher) {
-                    if (is_subclass_of($config->dispatcher($dispatcher)['config'], AsyncMessageDispatcherConfig::class) === false) {
-                        $dispatchers[] = $dispatcher;
-                    }
-                }
-            }
-
             $repoFactory->generateRepositoryClass(
                 $rootConfig['namespace'],
                 $rootConfig['repositoryClass'],
                 $rootConfig['messageTable'],
                 $rootConfig['database'],
                 $root,
-                $config->useOutbox(),
+                $config->outboxEnabled(),
                 $config->outboxTableName(),
-                $dispatchers,
+                $this->getRepositoryDispatcherList($rootConfig['dispatchers'], $config),
                 $rootConfig['decorators'],
             );
         }
+    }
+
+    /**
+     * @param array<string> $dispatchers
+     *
+     * @return array<string>
+     */
+    private function getRepositoryDispatcherList(
+        array $dispatchers,
+        EventSauceConfig $config,
+    ) : array {
+        if ($config->outboxEnabled() === false) {
+            return $dispatchers;
+        }
+
+        return array_filter(
+            $dispatchers,
+            static function ($dispatcher) use ($config) {
+                return $config->dispatcher($dispatcher)['driver'] instanceof MessageDispatcherConfig;
+            },
+        );
     }
 }

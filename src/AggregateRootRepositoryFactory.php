@@ -6,9 +6,11 @@ namespace Idiosyncratic\Spiral\EventSauceBridge;
 
 use Spiral\Boot\DirectoriesInterface;
 
+use function array_pop;
 use function array_reduce;
 use function chmod;
 use function class_exists;
+use function explode;
 use function file_put_contents;
 use function implode;
 use function is_dir;
@@ -76,7 +78,10 @@ EOPHP;
         mkdir($this->repositoryDirectory);
     }
 
-    /** @param array<string> $dispatchers */
+    /**
+     * @param array<string> $dispatchers
+     * @param array<string> $decorators
+     */
     public function generateRepositoryClass(
         string $namespace,
         string $repositoryClass,
@@ -97,30 +102,6 @@ EOPHP;
 
         $classContent = self::REPOSITORY_CLASS_TEMPLATE;
 
-        if (empty($dispatchers)) {
-            $messageDispatcherParameter = 'MessageDispatcher $dispatcher,';
-        } else {
-            $paramLines = [];
-            foreach ($dispatchers as $dispatcher) {
-                $paramLines[] = sprintf('#[MessageDispatcherAttribute(\'%s\')]', $dispatcher);
-            }
-
-            $paramLines[] = 'MessageDispatcher $dispatcher,';
-            $messageDispatcherParameter = implode(PHP_EOL . '        ', $paramLines);
-        }
-
-        if (empty($decorators)) {
-            $messageDecoratorParameter = 'MessageDecorator $decorator,';
-        } else {
-            $paramLines = [];
-            foreach ($decorators as $decorator) {
-                $paramLines[] = sprintf('#[MessageDecoratorAttribute(\'%s\')]', $decorator);
-            }
-
-            $paramLines[] = 'MessageDecorator $decorator,';
-            $messageDecoratorParameter = implode(PHP_EOL . '        ', $paramLines);
-        }
-
         $classContent = array_reduce(
             [
                 ['namespace', $namespace],
@@ -130,8 +111,8 @@ EOPHP;
                 ['aggregateFQCN', $aggregateFQCN],
                 ['useOutbox', ($useOutbox ? 'true' : 'false')],
                 ['outboxTableName', $outboxTableName],
-                ['messageDispatcherParameter', $messageDispatcherParameter],
-                ['messageDecoratorParameter', $messageDecoratorParameter],
+                ['messageDispatcherParameter', $this->makeMessageDispatcherParameter($dispatchers)],
+                ['messageDecoratorParameter', $this->makeMessageDecoratorParameter($decorators)],
             ],
             static function ($classContent, $token) {
                 return str_replace(sprintf('<%s>', $token[0]), $token[1], $classContent);
@@ -146,5 +127,43 @@ EOPHP;
         chmod($filename, 0644);
 
         require $filename;
+    }
+
+    /** @param array<string> $decorators */
+    private function makeMessageDecoratorParameter(
+        array $decorators,
+    ) : string {
+        if (empty($decorators)) {
+            return '        MessageDecorator $decorator,';
+        }
+
+        $paramLines = [];
+
+        foreach ($decorators as $decorator) {
+            $paramLines[] = sprintf('#[MessageDecoratorAttribute(\'%s\')]', $decorator);
+        }
+
+        $paramLines[] = 'MessageDecorator $decorator,';
+
+        return implode(PHP_EOL . '        ', $paramLines);
+    }
+
+    /** @param array<string> $dispatchers */
+    private function makeMessageDispatcherParameter(
+        array $dispatchers,
+    ) : string {
+        if (empty($dispatchers)) {
+            return '        MessageDispatcher $dispatcher,';
+        }
+
+        $paramLines = [];
+
+        foreach ($dispatchers as $dispatcher) {
+            $paramLines[] = sprintf('#[MessageDispatcherAttribute(\'%s\')]', $dispatcher);
+        }
+
+        $paramLines[] = 'MessageDispatcher $dispatcher,';
+
+        return implode(PHP_EOL . '        ', $paramLines);
     }
 }
