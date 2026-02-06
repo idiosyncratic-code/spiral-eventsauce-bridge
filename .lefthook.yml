@@ -1,5 +1,6 @@
 ---
 pre-commit:
   commands:
-    lint:
-      run: phpcs
+    phpcbf:
+      run: phpcbf {staged_files}
+      glob: "*.{php}"
