@@ -8,13 +8,15 @@ use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatch
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
 use Spiral\Core\InjectableConfig;
 
+use function array_merge;
+
 final class EventSauceConfig extends InjectableConfig
 {
     public const string CONFIG = 'eventsauce';
 
     /**
      * @var array{
-     *     'eventClassMap': array<class-string, string|array<string>>,
+     *     'eventClassMap': array<class-string, string|non-empty-array<string>>,
      *     'idClassMap': array<class-string, string>,
      *     'dispatchers': array<
      *         string, array{
@@ -23,7 +25,7 @@ final class EventSauceConfig extends InjectableConfig
      *         }
      *     >,
      *     'drivers': array<string, AsyncMessageDispatcherConfig|MessageDispatcherConfig>,
-     *     'aggregateRoots': array<string, mixed>,
+     *     'aggregateRoots': array<class-string, mixed>,
      *     'outbox': array{
      *         'enabled': bool,
      *         'tableName': string,
@@ -48,7 +50,7 @@ final class EventSauceConfig extends InjectableConfig
         ],
     ];
 
-    /** @return array<class-string, string|array<string>> */
+    /** @return array<class-string, string|non-empty-array<string>> */
     public function eventClassMap() : array
     {
         return $this->config['eventClassMap'];
@@ -60,7 +62,13 @@ final class EventSauceConfig extends InjectableConfig
         return $this->config['idClassMap'];
     }
 
-    /** @return array<string, mixed> */
+    /** @return array<class-string, string|non-empty-array<string>> */
+    public function classNameInflectorMap() : array
+    {
+        return array_merge($this->eventClassMap(), $this->idClassMap());
+    }
+
+    /** @return array<class-string, mixed> */
     public function aggregateRoots() : array
     {
         return $this->config['aggregateRoots'];

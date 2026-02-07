@@ -15,6 +15,7 @@ use RuntimeException;
 use Spiral\Core\Container\InjectorInterface;
 use Stringable;
 
+/** @implements InjectorInterface<MessageRepository> */
 final class MessageRepositoryInjector implements InjectorInterface
 {
     public function __construct(
@@ -33,10 +34,6 @@ final class MessageRepositoryInjector implements InjectorInterface
         }
 
         $tableAttribute = $context->getAttributes(MessageRepositoryTable::class)[0]->newInstance();
-
-        if (! $tableAttribute instanceof MessageRepositoryTable) {
-            throw new RuntimeException('no message repository table attribute');
-        }
 
         $database = $tableAttribute->database;
 

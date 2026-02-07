@@ -19,8 +19,8 @@ use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Console\Bootloader\ConsoleBootloader;
 
 use function array_filter;
-use function array_merge;
 use function class_exists;
+use function count;
 
 final class EventSauceBootloader extends Bootloader
 {
@@ -35,12 +35,16 @@ final class EventSauceBootloader extends Bootloader
     public function createClassNameInflector(
         EventSauceConfig $config,
     ) : ClassNameInflector {
-        return new ChainClassNameInflector(
-            new ExplicitlyMappedClassNameInflector(
-                array_merge($config->eventClassMap(), $config->idClassMap()),
-            ),
-            new DotSeparatedSnakeCaseInflector(),
-        );
+        $classMap = $config->classNameInflectorMap();
+
+        if (count($classMap) > 0) {
+            return new ChainClassNameInflector(
+                new ExplicitlyMappedClassNameInflector($classMap),
+                new DotSeparatedSnakeCaseInflector(),
+            );
+        }
+
+        return new DotSeparatedSnakeCaseInflector();
     }
 
     #[BootMethod]

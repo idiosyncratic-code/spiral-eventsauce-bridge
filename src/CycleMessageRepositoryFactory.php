@@ -22,7 +22,7 @@ final class CycleMessageRepositoryFactory
 
     private readonly IdEncoder $eventIdEncoder;
 
-    /** @var array<string, CycleMessageRepository> */
+    /** @var array<string, CycleMessageRepository|CycleTransactionalMessageRepository> */
     private array $repositories = [];
 
     public function __construct(

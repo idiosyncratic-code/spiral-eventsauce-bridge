@@ -36,12 +36,12 @@ final class EnqueueMessageDispatcher implements MessageDispatcher
     ) : void {
         foreach ($messages as $message) {
             $serializedMessage = json_decode(
-                json: json_encode($this->serializer->serializeMessage($message)),
+                json: (string) json_encode($this->serializer->serializeMessage($message)),
                 flags: JSON_OBJECT_AS_ARRAY,
             );
 
             $message = $this->context->createMessage(
-                json_encode($serializedMessage['payload']),
+                (string) json_encode($serializedMessage['payload']),
                 [],
             );
 

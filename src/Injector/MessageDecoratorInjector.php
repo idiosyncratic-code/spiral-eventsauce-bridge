@@ -18,6 +18,7 @@ use Stringable;
 use function count;
 use function sprintf;
 
+/** @implements InjectorInterface<MessageDecorator> */
 final class MessageDecoratorInjector implements InjectorInterface
 {
     public function __construct(

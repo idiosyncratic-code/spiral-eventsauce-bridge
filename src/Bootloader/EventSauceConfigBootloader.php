@@ -15,6 +15,7 @@ use function sprintf;
 
 final class EventSauceConfigBootloader extends Bootloader implements SingletonInterface
 {
+    /** @param ConfiguratorInterface<object> $configurator */
     public function __construct(
         private readonly ConfiguratorInterface $configurator,
     ) {

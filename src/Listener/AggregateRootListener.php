@@ -20,7 +20,7 @@ use function sprintf;
 #[TargetAttribute(AggregateRootAttribute::class)]
 final class AggregateRootListener implements TokenizationListenerInterface
 {
-    /** @var array<string, mixed> */
+    /** @var array<class-string, mixed> */
     private array $aggregateRoots = [];
 
     public function __construct(

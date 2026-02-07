@@ -38,6 +38,7 @@ final class CycleMessageRepository implements MessageRepository
 
     private readonly IdEncoder $eventIdEncoder;
 
+    /** @param Table<object> $table */
     public function __construct(
         private readonly Table $table,
         private readonly MessageSerializer $serializer,
