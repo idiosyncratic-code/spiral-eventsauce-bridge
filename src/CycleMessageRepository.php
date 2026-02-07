@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge;
 
-use Cycle\Database\TableInterface;
+use Cycle\Database\Table;
 use EventSauce\EventSourcing\AggregateRootId;
 use EventSauce\EventSourcing\Header;
 use EventSauce\EventSourcing\Message;
@@ -39,7 +39,7 @@ final class CycleMessageRepository implements MessageRepository
     private readonly IdEncoder $eventIdEncoder;
 
     public function __construct(
-        private readonly TableInterface $table,
+        private readonly Table $table,
         private readonly MessageSerializer $serializer,
         private readonly int $jsonEncodeOptions = 0,
         TableSchema|null $tableSchema = null,

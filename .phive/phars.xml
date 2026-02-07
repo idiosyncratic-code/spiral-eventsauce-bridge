@@ -2,5 +2,4 @@
 <phive xmlns="https://phar.io/phive">
   <phar name="composer-require-checker" version="^4.20.0" installed="4.20.0" location="./tools/composer-require-checker" copy="true"/>
   <phar name="composer-unused" version="^0.9.5" installed="0.9.5" location="./tools/composer-unused" copy="true"/>
-  <phar name="captainhook" version="^5.27.4" installed="5.27.4" location="./tools/captainhook" copy="true"/>
 </phive>

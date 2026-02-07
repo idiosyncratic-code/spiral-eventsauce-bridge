@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher;
 
+use Enqueue\Sns\SnsMessage;
 use EventSauce\EventSourcing\Message;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
@@ -51,13 +52,15 @@ final class EnqueueMessageDispatcher implements MessageDispatcher
                 ];
             }, $serializedMessage['headers']);
 
-            $message->setMessageAttributes($messageAttributes);
+            if ($message instanceof SnsMessage) {
+                $message->setMessageAttributes($messageAttributes);
 
-            $message->setMessageGroupId(sprintf(
-                '%s-%s',
-                $serializedMessage['headers']['__aggregate_root_type'],
-                $serializedMessage['headers']['__aggregate_root_id'],
-            ));
+                $message->setMessageGroupId(sprintf(
+                    '%s-%s',
+                    $serializedMessage['headers']['__aggregate_root_type'],
+                    $serializedMessage['headers']['__aggregate_root_id'],
+                ));
+            }
 
             $this->producer->send(
                 $this->destination,

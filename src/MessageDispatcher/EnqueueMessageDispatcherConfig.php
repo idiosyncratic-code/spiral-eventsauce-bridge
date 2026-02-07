@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher;
 
 use Enqueue\ConnectionFactoryFactory;
+use Enqueue\Sns\SnsDestination;
 use EventSauce\EventSourcing\MessageConsumer;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
@@ -34,9 +35,11 @@ final class EnqueueMessageDispatcherConfig implements AsyncMessageDispatcherConf
 
         $destination = $context->createTopic($this->destination);
 
-        $destination->setFifoTopic(true);
+        if ($destination instanceof SnsDestination) {
+            $destination->setFifoTopic(true);
 
-        $destination->setContentBasedDeduplication(true);
+            $destination->setContentBasedDeduplication(true);
+        }
 
         return new EnqueueMessageDispatcher(
             $serializer,
@@ -47,6 +50,7 @@ final class EnqueueMessageDispatcherConfig implements AsyncMessageDispatcherConf
 
     /** @param array<MessageConsumer> $consumers */
     public function createConsumer(
+        MessageSerializer $serializer,
         array $consumers,
     ) : MessageDispatcher {
         $context = (new ConnectionFactoryFactory())->create([
@@ -58,7 +62,7 @@ final class EnqueueMessageDispatcherConfig implements AsyncMessageDispatcherConf
         ])->createContext();
 
         return new EnqueueMessageDispatcher(
-            $container->get(MessageSerializer::class),
+            $serializer,
             $context,
             $context->createTopic($this->destination),
         );

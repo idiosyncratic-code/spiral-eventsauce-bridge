@@ -4,3 +4,7 @@ pre-commit:
     phpcbf:
       run: phpcbf {staged_files}
       glob: "*.{php}"
+      stage_fixed: true
+    phpstan:
+      run: phpstan analyse
+      glob: "*.{php}"

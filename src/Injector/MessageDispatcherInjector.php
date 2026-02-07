@@ -16,10 +16,10 @@ use ReflectionClass;
 use ReflectionParameter;
 use RuntimeException;
 use Spiral\Core\Container\InjectorInterface;
-use Spiral\Core\FactoryInterface;
 use Stringable;
 
 use function array_map;
+use function array_shift;
 use function count;
 use function is_string;
 use function sprintf;
@@ -28,7 +28,6 @@ final class MessageDispatcherInjector implements InjectorInterface
 {
     public function __construct(
         private readonly ContainerInterface $container,
-        private readonly FactoryInterface $factory,
         private readonly EventSauceConfig $config,
     ) {
     }
@@ -59,7 +58,7 @@ final class MessageDispatcherInjector implements InjectorInterface
 
         return count($dispatchers) > 1
             ? new MessageDispatcherChain(...$dispatchers)
-            : $dispatchers[0];
+            : array_shift($dispatchers);
     }
 
     private function createDispatcher(

@@ -16,6 +16,7 @@ interface AsyncMessageDispatcherConfig
 
     /** @param array<MessageConsumer> $consumers */
     public function createConsumer(
+        MessageSerializer $serializer,
         array $consumers,
     ) : MessageDispatcher;
 }

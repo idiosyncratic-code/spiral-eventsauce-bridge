@@ -7,12 +7,10 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 use EventSauce\EventSourcing\ClassNameInflector;
 use EventSauce\EventSourcing\DotSeparatedSnakeCaseInflector;
 use EventSauce\EventSourcing\ExplicitlyMappedClassNameInflector;
-use EventSauce\MessageOutbox\RelayMessages;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\ChainClassNameInflector;
 use Idiosyncratic\Spiral\EventSauceBridge\Console\OutboxRelayCommand;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
-use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatcherConfig;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
 use Spiral\Boot\Attribute\BindMethod;
 use Spiral\Boot\Attribute\BootMethod;
@@ -43,21 +41,6 @@ final class EventSauceBootloader extends Bootloader
             ),
             new DotSeparatedSnakeCaseInflector(),
         );
-    }
-
-    #[BindMethod]
-    public function createRelayMessages(
-        EventSauceConfig $config,
-    ) : RelayMessages {
-        $dispatchers = [];
-
-        foreach ($config['dispatchers'] as $dispatcher) {
-            if (! $config->dispatcher($dispatcher)['driver'] instanceof AsyncMessageDispatcherConfig) {
-                continue;
-            }
-
-            $dispatchers[] = $dispatcher;
-        }
     }
 
     #[BootMethod]

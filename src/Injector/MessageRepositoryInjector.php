@@ -32,7 +32,7 @@ final class MessageRepositoryInjector implements InjectorInterface
             throw new RuntimeException('not a reflection parameter');
         }
 
-        $tableAttribute = $context->getAttributes(MessageRepositoryTable::class)[0]?->newInstance();
+        $tableAttribute = $context->getAttributes(MessageRepositoryTable::class)[0]->newInstance();
 
         if (! $tableAttribute instanceof MessageRepositoryTable) {
             throw new RuntimeException('no message repository table attribute');

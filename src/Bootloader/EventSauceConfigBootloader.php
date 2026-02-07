@@ -22,14 +22,25 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
 
     public function init() : void
     {
-        $configurator->setDefaults(EventSauceConfig::CONFIG, [
+        $this->configurator->setDefaults(EventSauceConfig::CONFIG, [
             'eventClassMap' => [],
             'idClassMap' => [],
             'dispatchers' => [
                 'sync' => [
-                    'config' => new SyncMessageDispatcherConfig(),
+                    'driver' => 'sync',
                     'consumers' => [],
                 ],
+            ],
+            'drivers' => [
+                'sync' => new SyncMessageDispatcherConfig(),
+            ],
+            'aggregateRoots' => [],
+            'outbox' => [
+                'enabled' => false,
+                'tableName' => 'message_outbox',
+                'database' => null,
+                'batchSize' => 1,
+                'commitSize' => 1,
             ],
         ]);
     }
@@ -70,7 +81,7 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
     }
 
     /**
-     * @param class-string $aggregateClassName
+     * @param class-string $className
      * @param array<string, mixed> $config
      */
     public function registerAggregateRoot(

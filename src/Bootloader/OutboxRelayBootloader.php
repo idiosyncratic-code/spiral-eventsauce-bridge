@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 
 use EventSauce\EventSourcing\MessageDispatcher;
+use EventSauce\EventSourcing\MessageDispatcherChain;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
 use EventSauce\MessageOutbox\OutboxRepository;
 use EventSauce\MessageOutbox\RelayMessages;
@@ -15,6 +16,7 @@ use Spiral\Boot\Attribute\BindMethod;
 use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Core\FactoryInterface;
 
+use function array_shift;
 use function count;
 
 final class OutboxRelayBootloader extends Bootloader
@@ -40,7 +42,7 @@ final class OutboxRelayBootloader extends Bootloader
 
         $dispatcher = count($dispatchers) > 1
             ? new MessageDispatcherChain(...$dispatchers)
-            : $dispatchers[0];
+            : array_shift($dispatchers);
 
         return new RelayMessagesThroughDispatcher($outboxRepository, $dispatcher);
     }

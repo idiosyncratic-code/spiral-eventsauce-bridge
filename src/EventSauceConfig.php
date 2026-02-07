@@ -8,19 +8,29 @@ use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatch
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
 use Spiral\Core\InjectableConfig;
 
-use function array_map;
-
 final class EventSauceConfig extends InjectableConfig
 {
     public const string CONFIG = 'eventsauce';
 
-    /** @var array{
+    /**
+     * @var array{
      *     'eventClassMap': array<class-string, string|array<string>>,
      *     'idClassMap': array<class-string, string>,
-     *     'dispatchers': array{string, array{
-     *         config: MessageDispatcherConfig,
-     *         consumers: array<class-string>,
-     *     }}
+     *     'dispatchers': array<
+     *         string, array{
+     *             'driver': string,
+     *             'consumers': array<class-string>,
+     *         }
+     *     >,
+     *     'drivers': array<string, AsyncMessageDispatcherConfig|MessageDispatcherConfig>,
+     *     'aggregateRoots': array<string, mixed>,
+     *     'outbox': array{
+     *         'enabled': bool,
+     *         'tableName': string,
+     *         'database': string|null,
+     *         'batchSize': int,
+     *         'commitSize': int,
+     *     },
      * }
      */
     protected array $config = [
@@ -33,6 +43,8 @@ final class EventSauceConfig extends InjectableConfig
             'enabled' => false,
             'tableName' => 'message_outbox',
             'database' => null,
+            'batchSize' => 1,
+            'commitSize' => 1,
         ],
     ];
 
@@ -48,35 +60,29 @@ final class EventSauceConfig extends InjectableConfig
         return $this->config['idClassMap'];
     }
 
-    /** @return array{class-string, array{
-     *      config: MessageDispatcherConfig,
-     *      consumers: array<class-string>,
-     *  }}
-     */
+    /** @return array<string, mixed> */
     public function aggregateRoots() : array
     {
         return $this->config['aggregateRoots'];
     }
 
-    /** @return array{string, array{
-     *      config: MessageDispatcherConfig,
-     *      consumers: array<class-string>,
-     *  }}
-     */
+    /** @return array<string, mixed> */
     public function dispatchers() : array
     {
-        return array_map(
-            function ($dispatcher) {
-                $dispatcher['driver'] = $this->driver($dispatcher['driver']);
+        $resolvedDispatchers = [];
 
-                return $dispatcher;
-            },
-            $this->config['dispatchers'],
-        );
+        foreach ($this->config['dispatchers'] as $dispatcherName => $dispatcher) {
+            $dispatcher['driver'] = $this->driver($dispatcher['driver']);
+
+            $resolvedDispatchers[$dispatcherName] = $dispatcher;
+        }
+
+        return $resolvedDispatchers;
     }
 
-    /** @return array{
-     *      config: MessageDispatcherConfig,
+    /**
+     * @return array{
+     *      driver: AsyncMessageDispatcherConfig|MessageDispatcherConfig,
      *      consumers: array<class-string>,
      *  }
      */
@@ -90,7 +96,7 @@ final class EventSauceConfig extends InjectableConfig
         return $dispatcher;
     }
 
-    /** @return array{string, MessageDispatcherConfig}*/
+    /** @return array<string, AsyncMessageDispatcherConfig|MessageDispatcherConfig> */
     public function drivers() : array
     {
         return $this->config['drivers'];

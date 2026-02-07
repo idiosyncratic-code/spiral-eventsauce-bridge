@@ -9,7 +9,6 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class AggregateRoot
 {
-    /** @param class-string $baseClass */
     public function __construct(
         public readonly string $messageTable,
         public readonly string $database = 'default',
