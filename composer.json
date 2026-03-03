@@ -42,6 +42,9 @@
   "suggest": {
     "enqueue/enqueue": "Allows for asynchronous message dispatching via many queuing systems"
   },
+  "scripts": {
+    "phpstan": "phpstan analyse --ansi --memory-limit=2G --error-format=table"
+  },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "autoload": {

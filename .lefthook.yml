@@ -6,5 +6,5 @@ pre-commit:
       glob: "*.{php}"
       stage_fixed: true
     phpstan:
-      run: phpstan analyse
+      run: phpstan analyse --ansi --memory-limit=2G --error-format=table
       glob: "*.{php}"
