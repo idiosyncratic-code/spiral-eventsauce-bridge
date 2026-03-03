@@ -8,6 +8,7 @@ use EventSauce\EventSourcing\DefaultHeadersDecorator;
 use EventSauce\EventSourcing\MessageDecorator;
 use EventSauce\EventSourcing\MessageDecoratorChain;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDecorator as MessageDecoratorAttribute;
+use Idiosyncratic\Spiral\EventSauceBridge\EventIdHeaderDecorator;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionParameter;
@@ -15,6 +16,7 @@ use RuntimeException;
 use Spiral\Core\Container\InjectorInterface;
 use Stringable;
 
+use function array_unshift;
 use function count;
 use function sprintf;
 
@@ -31,7 +33,7 @@ final class MessageDecoratorInjector implements InjectorInterface
         Stringable|string|null $context = null,
     ) : MessageDecorator {
         if ($context === null) {
-            return $this->container->get(DefaultHeadersDecorator::class);
+            return $this->makeDefaultMessageDecorator();
         }
 
         if (! $context instanceof ReflectionParameter) {
@@ -49,13 +51,19 @@ final class MessageDecoratorInjector implements InjectorInterface
         }
 
         if (count($decorators) === 0) {
-            return $this->container->get(DefaultHeadersDecorator::class);
+            return $this->makeDefaultMessageDecorator();
         }
 
-        if (count($decorators) > 1) {
-            return new MessageDecoratorChain(...$decorators);
-        }
+        array_unshift($decorators, new EventIdHeaderDecorator());
 
-        return $decorators[0];
+        return new MessageDecoratorChain(...$decorators);
+    }
+
+    private function makeDefaultMessageDecorator() : MessageDecorator
+    {
+        return new MessageDecoratorChain(
+            new EventIdHeaderDecorator(),
+            $this->container->get(DefaultHeadersDecorator::class),
+        );
     }
 }
