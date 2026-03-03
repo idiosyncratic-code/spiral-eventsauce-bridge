@@ -9,6 +9,7 @@ use EventSauce\EventSourcing\DotSeparatedSnakeCaseInflector;
 use EventSauce\EventSourcing\ExplicitlyMappedClassNameInflector;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\ChainClassNameInflector;
+use Idiosyncratic\Spiral\EventSauceBridge\Console\MessageConsumeCommand;
 use Idiosyncratic\Spiral\EventSauceBridge\Console\OutboxRelayCommand;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
@@ -29,13 +30,14 @@ final class EventSauceBootloader extends Bootloader
         ConsoleBootloader $console,
     ) : void {
         $console->addCommand(OutboxRelayCommand::class);
+        $console->addCommand(MessageConsumeCommand::class);
     }
 
     #[BindMethod]
     public function createClassNameInflector(
         EventSauceConfig $config,
     ) : ClassNameInflector {
-        $classMap = $config->classNameInflectorMap();
+        $classMap = $config->inflectorClassMap();
 
         if (count($classMap) > 0) {
             return new ChainClassNameInflector(

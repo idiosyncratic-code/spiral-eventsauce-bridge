@@ -44,6 +44,7 @@ final class CycleOutboxRepository implements OutboxRepository
         $sqlQuery = 'INSERT INTO ' . $this->tableName . ' (payload) VALUES ' . implode(', ', array_fill(0, $numberOfMessages, '(?)'));
 
         $serializedMessages = [];
+
         foreach ($messages as $message) {
             $serializedMessages[] = json_encode($this->serializer->serializeMessage($message));
         }

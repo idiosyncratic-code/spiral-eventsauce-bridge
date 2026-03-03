@@ -9,11 +9,12 @@ use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\SyncMessageDispatche
 use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Config\ConfiguratorInterface;
 use Spiral\Config\Patch\Append;
-use Spiral\Core\Container\SingletonInterface;
+use Spiral\Core\Attribute\Singleton;
 
 use function sprintf;
 
-final class EventSauceConfigBootloader extends Bootloader implements SingletonInterface
+#[Singleton]
+final class EventSauceConfigBootloader extends Bootloader
 {
     /** @param ConfiguratorInterface<object> $configurator */
     public function __construct(
@@ -24,11 +25,11 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
     public function init() : void
     {
         $this->configurator->setDefaults(EventSauceConfig::CONFIG, [
-            'eventClassMap' => [],
             'idClassMap' => [],
             'dispatchers' => [
                 'sync' => [
                     'driver' => 'sync',
+                    'receiver' => false,
                     'consumers' => [],
                 ],
             ],
@@ -46,23 +47,22 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
         ]);
     }
 
-    public function mapEventClass(
+    public function mapClassInflector(
         string $className,
-        string ...$eventNames,
+        string ...$inflectedClassNames,
     ) : void {
-        $this->configurator->modify(
-            EventSauceConfig::CONFIG,
-            new Append('eventClassMap', $className, $eventNames),
-        );
-    }
+        if (count($inflectedClassNames) === 1) {
+            $this->configurator->modify(
+                EventSauceConfig::CONFIG,
+                new Append('inflectorClassMap', $className, $inflectedClassNames[0]),
+            );
 
-    public function mapIdClass(
-        string $className,
-        string $idName,
-    ) : void {
+            return;
+        }
+
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
-            new Append('idClassMap', $className, $idName),
+            new Append('inflectorClassMap', $className, $inflectedClassNames),
         );
     }
 

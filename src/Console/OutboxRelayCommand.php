@@ -66,6 +66,6 @@ final class OutboxRelayCommand extends Command
             $this->shouldRun = false;
         }
 
-        return false;
+        return $previousExitCode;
     }
 }

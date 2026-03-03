@@ -41,7 +41,7 @@ final class DomainEventNameListener implements TokenizationListenerInterface
     public function finalize() : void
     {
         foreach ($this->classMap as $className => $eventNames) {
-            $this->config->mapEventClass($className, ...$eventNames);
+            $this->config->mapClassInflector($className, ...$eventNames);
         }
     }
 }

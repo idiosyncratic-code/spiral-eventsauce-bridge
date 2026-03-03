@@ -44,6 +44,9 @@ final class OutboxRelayBootloader extends Bootloader
             ? new MessageDispatcherChain(...$dispatchers)
             : array_shift($dispatchers);
 
-        return new RelayMessagesThroughDispatcher($outboxRepository, $dispatcher);
+        return new RelayMessagesThroughDispatcher(
+            $outboxRepository,
+            $dispatcher,
+        );
     }
 }
