@@ -39,8 +39,8 @@ final class AggregateRootIdListener implements TokenizationListenerInterface
 
     public function finalize() : void
     {
-        foreach ($this->classMap as $className => $eventName) {
-            $this->config->mapIdClass($className, $eventName);
+        foreach ($this->classMap as $className => $inflectedClassName) {
+            $this->config->mapClassInflector($className, $inflectedClassName);
         }
     }
 }

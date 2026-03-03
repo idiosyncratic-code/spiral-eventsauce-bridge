@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge\Injector;
 
+use EventSauce\EventSourcing\AntiCorruptionLayer\AntiCorruptionMessageDispatcher;
 use EventSauce\EventSourcing\MessageDispatcher;
 use EventSauce\EventSourcing\MessageDispatcherChain;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
 use EventSauce\EventSourcing\SynchronousMessageDispatcher;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageDispatcher as MessageDispatcherAttribute;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
+use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AggregateTypeFilter;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\AsyncMessageDispatcherConfig;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
@@ -67,18 +69,27 @@ final class MessageDispatcherInjector implements InjectorInterface
     ) : MessageDispatcher {
         $dispatcher = $this->config->dispatcher($dispatcherName);
 
+        $aggregateFilter = new AggregateTypeFilter(
+            $dispatcher['aggregates'],
+        );
+
         if ($dispatcher['driver'] instanceof AsyncMessageDispatcherConfig) {
-            return $dispatcher['driver']->createProducer(
+            $dispatcherInstance = $dispatcher['driver']->createProducer(
                 $this->container->get(MessageSerializer::class),
+            );
+        } else {
+            $consumers = array_map(function ($consumer) {
+                return $this->container->get($consumer);
+            }, $dispatcher['consumers']);
+
+            $dispatcherInstance = $dispatcher['driver']->create(
+                $consumers,
             );
         }
 
-        $consumers = array_map(function ($consumer) {
-            return $this->container->get($consumer);
-        }, $dispatcher['consumers']);
-
-        return $dispatcher['driver']->create(
-            $consumers,
+        return new AntiCorruptionMessageDispatcher(
+            dispatcher: $dispatcherInstance,
+            filterBefore: $aggregateFilter,
         );
     }
 

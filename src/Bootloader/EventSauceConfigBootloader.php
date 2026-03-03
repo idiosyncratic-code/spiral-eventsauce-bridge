@@ -11,7 +11,10 @@ use Spiral\Config\ConfiguratorInterface;
 use Spiral\Config\Patch\Append;
 use Spiral\Core\Attribute\Singleton;
 
+use function count;
 use function sprintf;
+use function str_replace;
+use function strtolower;
 
 #[Singleton]
 final class EventSauceConfigBootloader extends Bootloader
@@ -31,6 +34,7 @@ final class EventSauceConfigBootloader extends Bootloader
                     'driver' => 'sync',
                     'receiver' => false,
                     'consumers' => [],
+                    'aggregates' => [],
                 ],
             ],
             'drivers' => [
@@ -89,12 +93,36 @@ final class EventSauceConfigBootloader extends Bootloader
         string $className,
         array $config,
     ) : void {
+        $inflectedClassName = $config['name'] ?? strtolower(str_replace('\\', '.', $className));
+
+        $this->mapClassInflector($className, $inflectedClassName);
+
+        $this->mapClassInflector('\\' . $className, $inflectedClassName);
+
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
                 position: 'aggregateRoots',
                 key: $className,
                 value: $config,
+            ),
+        );
+
+        foreach ($config['dispatchers'] as $dispatcher) {
+            $this->registerAggregateDispatcher($dispatcher, $inflectedClassName);
+        }
+    }
+
+    public function registerAggregateDispatcher(
+        string $dispatcherName,
+        string $aggregateName,
+    ) : void {
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: sprintf('dispatchers.%s.aggregates', $dispatcherName),
+                key: null,
+                value: $aggregateName,
             ),
         );
     }

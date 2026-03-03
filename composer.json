@@ -9,7 +9,8 @@
   },
   "require": {
     "php": ">=8.4",
-    "ext-pcntl" : "*",
+    "ext-pcntl": "*",
+    "aws/aws-sdk-php": "^3.369",
     "cycle/database": "^2.15",
     "cycle/migrations": "^4.2",
     "eventsauce/eventsauce": "^3.7",
