@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 
+use Idiosyncratic\Spiral\Config\Patch\Append;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\SyncMessageDispatcherConfig;
 use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Config\ConfiguratorInterface;
-use Spiral\Config\Patch\Append;
 use Spiral\Core\Attribute\Singleton;
 
 use function count;
@@ -58,7 +58,11 @@ final class EventSauceConfigBootloader extends Bootloader
         if (count($inflectedClassNames) === 1) {
             $this->configurator->modify(
                 EventSauceConfig::CONFIG,
-                new Append('inflectorClassMap', $className, $inflectedClassNames[0]),
+                new Append(
+                    'inflectorClassMap',
+                    $className,
+                    $inflectedClassNames[0],
+                ),
             );
 
             return;
@@ -66,7 +70,11 @@ final class EventSauceConfigBootloader extends Bootloader
 
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
-            new Append('inflectorClassMap', $className, $inflectedClassNames),
+            new Append(
+                'inflectorClassMap',
+                $className,
+                $inflectedClassNames,
+            ),
         );
     }
 
@@ -117,6 +125,16 @@ final class EventSauceConfigBootloader extends Bootloader
         string $dispatcherName,
         string $aggregateName,
     ) : void {
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: sprintf('dispatchers.%s', $dispatcherName),
+                key: 'aggregates',
+                value: [],
+                overwrite: false,
+            ),
+        );
+
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
