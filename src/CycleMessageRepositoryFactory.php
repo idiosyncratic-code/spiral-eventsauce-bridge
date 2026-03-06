@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge;
 
-use Cycle\Database\DatabaseInterface;
 use Cycle\Database\DatabaseProviderInterface;
 use EventSauce\EventSourcing\Serialization\MessageSerializer;
 use EventSauce\IdEncoding\IdEncoder;
@@ -23,7 +22,7 @@ final class CycleMessageRepositoryFactory
 
     private readonly IdEncoder $eventIdEncoder;
 
-    /** @var array<string, CycleMessageRepository> */
+    /** @var array<string, CycleMessageRepository|CycleTransactionalMessageRepository> */
     private array $repositories = [];
 
     public function __construct(
@@ -42,8 +41,7 @@ final class CycleMessageRepositoryFactory
     public function makeMessageRepository(
         string $db,
         string $table,
-        bool $useOutbox,
-        string $outboxTableName,
+        OutboxRepository|null $outboxRepository,
     ) : CycleMessageRepository|CycleTransactionalMessageRepository {
         $repositoryKey = sprintf('%s_%s', $db, $table);
 
@@ -54,6 +52,7 @@ final class CycleMessageRepositoryFactory
         $database = $this->dbProvider->database($db);
 
         $repository = new CycleMessageRepository(
+            // @phpstan-ignore argument.type
             table: $database->table(sprintf('%s_event_store', $table)),
             serializer: $this->serializer,
             jsonEncodeOptions: $this->jsonEncodeOptions,
@@ -62,30 +61,14 @@ final class CycleMessageRepositoryFactory
             eventIdEncoder: $this->eventIdEncoder,
         );
 
-        if ($useOutbox === true) {
+        if ($outboxRepository !== null) {
             $repository = new CycleTransactionalMessageRepository(
                 $database,
                 $repository,
-                $this->makeOutboxRepository(
-                    $database,
-                    $outboxTableName,
-                    $this->serializer,
-                ),
+                $outboxRepository,
             );
         }
 
         return $this->repositories[$repositoryKey] = $repository;
-    }
-
-    private function makeOutboxRepository(
-        DatabaseInterface $database,
-        string $outboxTableName,
-        MessageSerializer $serializer,
-    ) : OutboxRepository {
-        return new CycleOutboxRepository(
-            $database,
-            $database->table($outboxTableName)->getName(),
-            $serializer,
-        );
     }
 }

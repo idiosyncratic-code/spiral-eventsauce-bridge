@@ -13,4 +13,12 @@
   <file>src</file>
 
   <rule ref="Idiosyncratic" />
+
+ <rule ref="Generic.PHP.ForbiddenFunctions">
+  <properties>
+   <property name="forbiddenFunctions" type="array" extend="true">
+    <element key="dump" value="null" />
+   </property>
+  </properties>
+ </rule>
 </ruleset>

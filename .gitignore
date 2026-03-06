@@ -4,4 +4,5 @@ vendor
 .deptrac.cache
 .phpcs-cache
 tools
+.lefthook-local.yml
 

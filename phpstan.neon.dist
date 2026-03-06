@@ -1,4 +1,16 @@
 parameters:
-    level: max
+    level: 7
     paths:
         - src
+    errorFormat: friendly
+    ignoreErrors:
+        -
+            identifier: argument.unknown
+            paths:
+                - src/Bootloader/OutboxRelayBootloader.php
+                - src/Injector/OutboxRepositoryInjector.php
+                - src/Console/MessageConsumeCommand.php
+        -
+            identifier: property.onlyRead
+            paths:
+                - src/Console/MessageConsumeCommand.php

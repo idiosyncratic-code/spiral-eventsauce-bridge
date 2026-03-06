@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 
+use Idiosyncratic\Spiral\Config\Patch\Append;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\SyncMessageDispatcherConfig;
 use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Config\ConfiguratorInterface;
-use Spiral\Config\Patch\Append;
-use Spiral\Core\Container\SingletonInterface;
+use Spiral\Core\Attribute\Singleton;
 
+use function count;
 use function sprintf;
+use function str_replace;
+use function strtolower;
 
-final class EventSauceConfigBootloader extends Bootloader implements SingletonInterface
+#[Singleton]
+final class EventSauceConfigBootloader extends Bootloader
 {
+    /** @param ConfiguratorInterface<object> $configurator */
     public function __construct(
         private readonly ConfiguratorInterface $configurator,
     ) {
@@ -22,35 +27,54 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
 
     public function init() : void
     {
-        $configurator->setDefaults(EventSauceConfig::CONFIG, [
-            'eventClassMap' => [],
+        $this->configurator->setDefaults(EventSauceConfig::CONFIG, [
             'idClassMap' => [],
             'dispatchers' => [
                 'sync' => [
-                    'config' => new SyncMessageDispatcherConfig(),
+                    'driver' => 'sync',
+                    'receiver' => false,
                     'consumers' => [],
+                    'aggregates' => [],
                 ],
+            ],
+            'drivers' => [
+                'sync' => new SyncMessageDispatcherConfig(),
+            ],
+            'aggregateRoots' => [],
+            'outbox' => [
+                'enabled' => false,
+                'tableName' => 'message_outbox',
+                'database' => null,
+                'batchSize' => 1,
+                'commitSize' => 1,
             ],
         ]);
     }
 
-    public function mapEventClass(
+    public function mapClassInflector(
         string $className,
-        string ...$eventNames,
+        string ...$inflectedClassNames,
     ) : void {
-        $this->configurator->modify(
-            EventSauceConfig::CONFIG,
-            new Append('eventClassMap', $className, $eventNames),
-        );
-    }
+        if (count($inflectedClassNames) === 1) {
+            $this->configurator->modify(
+                EventSauceConfig::CONFIG,
+                new Append(
+                    'inflectorClassMap',
+                    $className,
+                    $inflectedClassNames[0],
+                ),
+            );
 
-    public function mapIdClass(
-        string $className,
-        string $idName,
-    ) : void {
+            return;
+        }
+
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
-            new Append('idClassMap', $className, $idName),
+            new Append(
+                'inflectorClassMap',
+                $className,
+                $inflectedClassNames,
+            ),
         );
     }
 
@@ -69,11 +93,20 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
         );
     }
 
-    /** @param class-string $aggregateClassName */
+    /**
+     * @param class-string $className
+     * @param array<string, mixed> $config
+     */
     public function registerAggregateRoot(
         string $className,
         array $config,
     ) : void {
+        $inflectedClassName = $config['name'] ?? strtolower(str_replace('\\', '.', $className));
+
+        $this->mapClassInflector($className, $inflectedClassName);
+
+        $this->mapClassInflector('\\' . $className, $inflectedClassName);
+
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
@@ -82,6 +115,33 @@ final class EventSauceConfigBootloader extends Bootloader implements SingletonIn
                 value: $config,
             ),
         );
+
+        foreach ($config['dispatchers'] as $dispatcher) {
+            $this->registerAggregateDispatcher($dispatcher, $inflectedClassName);
+        }
     }
 
+    public function registerAggregateDispatcher(
+        string $dispatcherName,
+        string $aggregateName,
+    ) : void {
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: sprintf('dispatchers.%s', $dispatcherName),
+                key: 'aggregates',
+                value: [],
+                overwrite: false,
+            ),
+        );
+
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: sprintf('dispatchers.%s.aggregates', $dispatcherName),
+                key: null,
+                value: $aggregateName,
+            ),
+        );
+    }
 }

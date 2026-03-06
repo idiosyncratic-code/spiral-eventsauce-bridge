@@ -1,0 +1,10 @@
+---
+pre-commit:
+  commands:
+    phpcbf:
+      run: phpcbf {staged_files}
+      glob: "*.{php}"
+      stage_fixed: true
+    phpstan:
+      run: phpstan analyse --ansi --memory-limit=2G --error-format=table
+      glob: "*.{php}"

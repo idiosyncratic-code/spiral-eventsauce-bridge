@@ -5,31 +5,48 @@ declare(strict_types=1);
 namespace Idiosyncratic\Spiral\EventSauceBridge\Bootloader;
 
 use EventSauce\EventSourcing\ClassNameInflector;
-use EventSauce\EventSourcing\DefaultHeadersDecorator;
 use EventSauce\EventSourcing\DotSeparatedSnakeCaseInflector;
 use EventSauce\EventSourcing\ExplicitlyMappedClassNameInflector;
-use EventSauce\EventSourcing\MessageDecorator;
 use Idiosyncratic\Spiral\EventSauceBridge\AggregateRootRepositoryFactory;
 use Idiosyncratic\Spiral\EventSauceBridge\ChainClassNameInflector;
+use Idiosyncratic\Spiral\EventSauceBridge\Console\MessageConsumeCommand;
+use Idiosyncratic\Spiral\EventSauceBridge\Console\OutboxRelayCommand;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
+use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherConfig;
 use Spiral\Boot\Attribute\BindMethod;
 use Spiral\Boot\Attribute\BootMethod;
+use Spiral\Boot\Attribute\InitMethod;
 use Spiral\Boot\Bootloader\Bootloader;
+use Spiral\Console\Bootloader\ConsoleBootloader;
 
-use function array_merge;
+use function array_filter;
+use function class_exists;
+use function count;
 
 final class EventSauceBootloader extends Bootloader
 {
+    #[InitMethod]
+    public function registerCommands(
+        ConsoleBootloader $console,
+    ) : void {
+        $console->addCommand(OutboxRelayCommand::class);
+        $console->addCommand(MessageConsumeCommand::class);
+    }
+
     #[BindMethod]
     public function createClassNameInflector(
         EventSauceConfig $config,
     ) : ClassNameInflector {
-        return new ChainClassNameInflector(
-            new ExplicitlyMappedClassNameInflector(
-                array_merge($config->getEventClassMap(), $config->getIdClassMap()),
-            ),
-            new DotSeparatedSnakeCaseInflector(),
-        );
+        $classMap = $config->inflectorClassMap();
+
+        if (count($classMap) > 0) {
+            return new ChainClassNameInflector(
+                new ExplicitlyMappedClassNameInflector($classMap),
+                new DotSeparatedSnakeCaseInflector(),
+            );
+        }
+
+        return new DotSeparatedSnakeCaseInflector();
     }
 
     #[BootMethod]
@@ -37,7 +54,7 @@ final class EventSauceBootloader extends Bootloader
         EventSauceConfig $config,
         AggregateRootRepositoryFactory $repoFactory,
     ) : void {
-        foreach ($config['aggregateRoots'] as $root => $rootConfig) {
+        foreach ($config->aggregateRoots() as $root => $rootConfig) {
             if (class_exists($rootConfig['repositoryClass'])) {
                 continue;
             }
@@ -48,11 +65,32 @@ final class EventSauceBootloader extends Bootloader
                 $rootConfig['messageTable'],
                 $rootConfig['database'],
                 $root,
-                $rootConfig['useOutbox'],
-                $rootConfig['outboxTableName'],
-                $rootConfig['dispatchers'],
+                $config->outboxEnabled(),
+                $config->outboxTableName(),
+                $this->getRepositoryDispatcherList($rootConfig['dispatchers'], $config),
                 $rootConfig['decorators'],
             );
         }
+    }
+
+    /**
+     * @param array<string> $dispatchers
+     *
+     * @return array<string>
+     */
+    private function getRepositoryDispatcherList(
+        array $dispatchers,
+        EventSauceConfig $config,
+    ) : array {
+        if ($config->outboxEnabled() === false) {
+            return $dispatchers;
+        }
+
+        return array_filter(
+            $dispatchers,
+            static function ($dispatcher) use ($config) {
+                return $config->dispatcher($dispatcher)['driver'] instanceof MessageDispatcherConfig;
+            },
+        );
     }
 }

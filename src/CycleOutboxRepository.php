@@ -44,6 +44,7 @@ final class CycleOutboxRepository implements OutboxRepository
         $sqlQuery = 'INSERT INTO ' . $this->tableName . ' (payload) VALUES ' . implode(', ', array_fill(0, $numberOfMessages, '(?)'));
 
         $serializedMessages = [];
+
         foreach ($messages as $message) {
             $serializedMessages[] = json_encode($this->serializer->serializeMessage($message));
         }
@@ -110,16 +111,14 @@ final class CycleOutboxRepository implements OutboxRepository
     public function cleanupConsumedMessages(
         int $amount,
     ) : int {
-        $connection = $this->dbProvider->database($this->dbName);
         $sqlStatement = 'DELETE FROM ' . $this->tableName . ' WHERE consumed = TRUE LIMIT ?';
 
-        return (int) $connection->execute($sqlStatement, [$amount]);
+        return (int) $this->database->execute($sqlStatement, [$amount]);
     }
 
     public function numberOfMessages() : int
     {
-        $connection = $this->dbProvider->database($this->dbName);
-        $statement = $connection->query('SELECT COUNT(id) FROM ' . $this->tableName);
+        $statement = $this->database->query('SELECT COUNT(id) FROM ' . $this->tableName);
         $row = $statement->fetch();
 
         return (int) $row[0];
@@ -127,8 +126,7 @@ final class CycleOutboxRepository implements OutboxRepository
 
     public function numberOfConsumedMessages() : int
     {
-        $connection = $this->dbProvider->database($this->dbName);
-        $statement = $connection->query('SELECT COUNT(id) FROM ' . $this->tableName . ' WHERE consumed = TRUE');
+        $statement = $this->database->query('SELECT COUNT(id) FROM ' . $this->tableName . ' WHERE consumed = TRUE');
         $row = $statement->fetch();
 
         return (int) $row[0];
@@ -136,8 +134,7 @@ final class CycleOutboxRepository implements OutboxRepository
 
     public function numberOfPendingMessages() : int
     {
-        $connection = $this->dbProvider->database($this->dbName);
-        $statement = $connection->query('SELECT COUNT(id) FROM ' . $this->tableName . ' WHERE consumed = FALSE');
+        $statement = $this->database->query('SELECT COUNT(id) FROM ' . $this->tableName . ' WHERE consumed = FALSE');
         $row = $statement->fetch();
 
         return (int) $row[0];
