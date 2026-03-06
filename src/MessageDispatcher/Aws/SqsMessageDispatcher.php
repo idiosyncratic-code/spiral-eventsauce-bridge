@@ -30,6 +30,10 @@ final class SqsMessageDispatcher implements MessageDispatcher
     public function dispatch(
         Message ...$messages,
     ) : void {
+        if (count($messages) === 0) {
+            return;
+        }
+
         if ($this->queueUrl === null) {
             $this->queueUrl = $this->getQueueUrl($this->queueName);
         }
@@ -44,7 +48,7 @@ final class SqsMessageDispatcher implements MessageDispatcher
             return;
         }
 
-        $payload = $this->serializeMessages($messages);
+        $payload = ['Entries' => $this->serializeMessages($messages)];
 
         $payload['QueueUrl'] = $this->queueUrl;
 

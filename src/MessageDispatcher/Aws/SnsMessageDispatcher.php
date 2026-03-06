@@ -28,6 +28,10 @@ final class SnsMessageDispatcher implements MessageDispatcher
     public function dispatch(
         Message ...$messages,
     ) : void {
+        if (count($messages) === 0) {
+            return;
+        }
+
         if ($this->topicArn === null) {
             $this->topicArn = $this->getTopicArn($this->destination);
         }
