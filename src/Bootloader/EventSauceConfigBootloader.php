@@ -55,6 +55,16 @@ final class EventSauceConfigBootloader extends Bootloader
         string $className,
         string ...$inflectedClassNames,
     ) : void {
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: '.',
+                key: 'inflectorClassMap',
+                value: [],
+                overwrite: false,
+            ),
+        );
+
         if (count($inflectedClassNames) === 1) {
             $this->configurator->modify(
                 EventSauceConfig::CONFIG,
@@ -86,6 +96,16 @@ final class EventSauceConfigBootloader extends Bootloader
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
+                position: sprintf('dispatchers.%s', $dispatcherName),
+                key: 'consumers',
+                value: [],
+                overwrite: false,
+            ),
+        );
+
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
                 position: sprintf('dispatchers.%s.consumers', $dispatcherName),
                 key: null,
                 value: $consumerClassName,
@@ -106,6 +126,16 @@ final class EventSauceConfigBootloader extends Bootloader
         $this->mapClassInflector($className, $inflectedClassName);
 
         $this->mapClassInflector('\\' . $className, $inflectedClassName);
+
+        $this->configurator->modify(
+            EventSauceConfig::CONFIG,
+            new Append(
+                position: '.',
+                key: 'aggregateRoots',
+                value: [],
+                overwrite: false,
+            ),
+        );
 
         $this->configurator->modify(
             EventSauceConfig::CONFIG,

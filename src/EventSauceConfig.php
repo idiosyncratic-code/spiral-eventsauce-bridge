@@ -9,6 +9,7 @@ use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\MessageDispatcherCon
 use Spiral\Core\InjectableConfig;
 
 use function array_map;
+use function array_merge;
 
 final class EventSauceConfig extends InjectableConfig
 {
@@ -83,7 +84,12 @@ final class EventSauceConfig extends InjectableConfig
     public function dispatcher(
         string $name,
     ) : array {
-        $dispatcher = $this->config['dispatchers'][$name];
+        $dispatcher = array_merge([
+            'driver' => null,
+            'receiver' => false,
+            'consumers' => [],
+            'aggregates' => [],
+        ], $this->config['dispatchers'][$name]);
 
         $dispatcher['driver'] = $this->driver($dispatcher['driver']);
 
