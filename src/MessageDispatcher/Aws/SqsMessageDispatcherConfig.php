@@ -19,21 +19,26 @@ final class SqsMessageDispatcherConfig implements AsyncMessageDispatcherConfig
         private readonly string $awsKey,
         private readonly string $awsSecret,
         private readonly string $region,
-        private readonly string|null $endpoint,
+        private readonly string|null $endpoint = null,
     ) {
     }
 
     public function createProducer(
         MessageSerializer $serializer,
     ) : MessageDispatcher {
-        $client = new SqsClient([
+        $clientParams = [
             'credentials' => [
                 'key' => $this->awsKey,
                 'secret' => $this->awsSecret,
             ],
             'region' => $this->region,
-            'endpoint' => $this->endpoint,
-        ]);
+        ];
+
+        if ($this->endpoint !== null) {
+            $clientParams['endpoint'] = $this->endpoint;
+        }
+
+        $client = new SqsClient($clientParams);
 
         return new SqsMessageDispatcher(
             $serializer,

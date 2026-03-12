@@ -21,7 +21,7 @@ final class SnsMessageDispatcher implements MessageDispatcher
     public function __construct(
         private readonly MessageSerializer $serializer,
         private readonly SnsClient $client,
-        private readonly string $destination,
+        private readonly string $topic,
     ) {
     }
 
@@ -33,7 +33,7 @@ final class SnsMessageDispatcher implements MessageDispatcher
         }
 
         if ($this->topicArn === null) {
-            $this->topicArn = $this->getTopicArn($this->destination);
+            $this->topicArn = $this->getTopicArn($this->topic);
         }
 
         if (count($messages) === 1) {

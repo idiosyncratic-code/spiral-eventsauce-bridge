@@ -15,7 +15,7 @@ use RuntimeException;
 final class SnsMessageDispatcherConfig implements AsyncMessageDispatcherConfig
 {
     public function __construct(
-        private readonly string $destination,
+        private readonly string $topic,
         private readonly string $awsKey,
         private readonly string $awsSecret,
         private readonly string $region,
@@ -27,19 +27,24 @@ final class SnsMessageDispatcherConfig implements AsyncMessageDispatcherConfig
     public function createProducer(
         MessageSerializer $serializer,
     ) : MessageDispatcher {
-        $client = new SnsClient([
+        $clientParams = [
             'credentials' => [
                 'key' => $this->awsKey,
                 'secret' => $this->awsSecret,
             ],
             'region' => $this->region,
-            'endpoint' => $this->endpoint,
-        ]);
+        ];
+
+        if ($this->endpoint !== null) {
+            $clientParams['endpoint'] = $this->endpoint;
+        }
+
+        $client = new SnsClient($clientParams);
 
         return new SnsMessageDispatcher(
             $serializer,
             $client,
-            $this->destination,
+            $this->topic,
         );
     }
 
