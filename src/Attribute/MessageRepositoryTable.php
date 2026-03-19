@@ -14,6 +14,7 @@ final class MessageRepositoryTable
         public readonly string $database = 'default',
         public readonly bool $useOutbox = false,
         public readonly string $outboxTableName = 'message_outbox',
+        public readonly string $domain = 'default',
     ) {
     }
 }

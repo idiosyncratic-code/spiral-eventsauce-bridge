@@ -6,8 +6,10 @@ namespace Idiosyncratic\Spiral\EventSauceBridge\Console;
 
 use EventSauce\MessageOutbox\RelayMessages;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
+use Spiral\Console\Attribute\Argument;
 use Spiral\Console\Attribute\AsCommand;
 use Spiral\Console\Command;
+use Spiral\Core\FactoryInterface;
 
 use function in_array;
 use function sleep;
@@ -19,6 +21,9 @@ use const SIGINT;
 #[AsCommand(name: 'eventsauce:relay', description: 'Run the Outbox Relay')]
 final class OutboxRelayCommand extends Command
 {
+    #[Argument]
+    private string $domain = 'default';
+
     private bool $shouldRun = true;
 
     public function __construct(
@@ -28,14 +33,21 @@ final class OutboxRelayCommand extends Command
     }
 
     public function perform(
-        RelayMessages $relay,
+        FactoryInterface $factory,
     ) : int {
         $this->info('Starting Outbox Relay');
 
+        $domainConfig = $this->config->domain($this->domain);
+
+        $relay = $factory->make(
+            RelayMessages::class,
+            context: $this->domain,
+        );
+
         while ($this->shouldRun) {
             $numberOfMessagesDispatched = $relay->publishBatch(
-                batchSize: $this->config->outboxBatchSize(),
-                commitSize: $this->config->outboxCommitSize(),
+                batchSize: $domainConfig['outbox']['batchSize'],
+                commitSize: $domainConfig['outbox']['commitSize'],
             );
 
             if ($numberOfMessagesDispatched !== 0) {
