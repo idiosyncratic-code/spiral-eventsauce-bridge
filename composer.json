@@ -19,7 +19,6 @@
     "eventsauce/message-repository-table-schema": "^1.0",
     "idiosyncratic/spiral-snacks": "^0.1.0",
     "psr/container": "^2.0",
-    "queue-interop/queue-interop": "^0.8",
     "ramsey/uuid": "^4.9",
     "spiral/attributes": "^3.1",
     "spiral/boot": "^3.16",
