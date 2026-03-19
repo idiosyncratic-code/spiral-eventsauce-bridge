@@ -96,10 +96,6 @@ final class EventSauceConfig extends InjectableConfig
             self::DEFAULT_DOMAIN_CONFIG,
             $this->config['domains'][$domain],
         );
-
-        // $domainConfig['dispatchers'] = $this->resolveDispatchers($domainConfig['dispatchers']);
-
-        //return $domainConfig;
     }
 
     /** @return array<string, AsyncMessageDispatcherConfig|MessageDispatcherConfig> */
@@ -146,48 +142,4 @@ final class EventSauceConfig extends InjectableConfig
 
         return $dispatcher;
     }
-
-    /*
-    public function outboxEnabled() : bool
-    {
-        return $this->config['outbox']['enabled'];
-    }
-
-    public function outboxTableName() : string
-    {
-        return $this->config['outbox']['tableName'];
-    }
-
-    public function outboxDatabase() : string
-    {
-        return $this->config['outbox']['database'];
-    }
-
-    public function outboxBatchSize() : int
-    {
-        return $this->config['outbox']['batchSize'];
-    }
-
-    public function outboxCommitSize() : int
-    {
-        return $this->config['outbox']['commitSize'];
-    }
-*/
-
-    /**
-     * @param array<string, mixed> $dispatchers
-     *
-     * @return array<string, mixed>
-     */
-    /*
-    private function resolveDispatchers(
-        array $dispatchers,
-    ) : array {
-        return array_map(function ($dispatcher) {
-            $dispatcher['driver'] = $this->driver($dispatcher['driver']);
-
-            return $dispatcher;
-        }, $dispatchers);
-    }
-    */
 }

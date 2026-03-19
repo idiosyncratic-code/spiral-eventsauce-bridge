@@ -51,17 +51,6 @@ final class MessageRepositoryInjector implements InjectorInterface
                 OutboxRepository::class,
                 context: $domain,
             );
-
-            /*
-            $outboxRepository = new CycleOutboxRepository(
-                $this->factory->make(
-                    DatabaseInterface::class,
-                    context: $database,
-                ),
-                $outboxTableName,
-                $this->serializer,
-            );
-            */
         }
 
         return $this->repositoryFactory->makeMessageRepository(
