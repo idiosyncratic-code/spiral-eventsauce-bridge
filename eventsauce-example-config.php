@@ -8,6 +8,18 @@ use Idiosyncratic\Spiral\EventSauceBridge\MessageDispatcher\SyncMessageDispatche
 
 return [
     'inflectorClassMap' => [],
+    'domains' => [
+        'default' => [
+            'database' => 'default',
+            'aggregateRoots' => [],
+            'outbox' => [
+                'enabled' => env('EVENTSAUCE_OUTBOX_ENABLED', false),
+                'tableName' => env('EVENTSAUCE_OUTBOX_TABLENAME', 'message_outbox'),
+                'batchSize' => env('EVENTSAUCE_OUTBOX_BATCHSIZE', 100),
+                'commitSize' => env('EVENTSAUCE_OUTBOX_COMMITSIZE', 1),
+            ],
+        ],
+    ],
     'dispatchers' => [
         'sync' => [
             'driver' => 'sync',
@@ -42,13 +54,5 @@ return [
             region: env('EVENTSAUCE_AWS_REGION', env('AWS_REGION')),
             endpoint: env('EVENTSAUCE_AWS_ENDPOINT', env('AWS_ENDPOINT')),
         ),
-    ],
-    'aggregateRoots' => [],
-    'outbox' => [
-        'enabled' => env('EVENTSAUCE_OUTBOX_ENABLED', false),
-        'tableName' => env('EVENTSAUCE_OUTBOX_TABLENAME', 'message_outbox'),
-        'database' => env('EVENTSAUCE_OUTBOX_DATABASE', null),
-        'batchSize' => env('EVENTSAUCE_OUTBOX_BATCHSIZE', 100),
-        'commitSize' => env('EVENTSAUCE_OUTBOX_COMMITSIZE', 1),
     ],
 ];
