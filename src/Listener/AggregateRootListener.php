@@ -51,7 +51,7 @@ final class AggregateRootListener implements TokenizationListenerInterface
             'namespace' => $namespace,
             'repositoryClass' => $repositoryClass,
             'idClass' => $idClass,
-            'database' => $aggregateMetadata->database,
+            'domain' => $aggregateMetadata->domain,
             'messageTable' => $aggregateMetadata->messageTable,
             'dispatchers' => [],
             'decorators' => [],

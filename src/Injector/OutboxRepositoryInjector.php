@@ -10,9 +10,13 @@ use EventSauce\MessageOutbox\OutboxRepository;
 use Idiosyncratic\Spiral\EventSauceBridge\CycleOutboxRepository;
 use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use ReflectionClass;
+use RuntimeException;
 use Spiral\Core\Container\InjectorInterface;
 use Spiral\Core\FactoryInterface;
 use Stringable;
+
+use function is_string;
+use function sprintf;
 
 /** @implements InjectorInterface<OutboxRepository> */
 final class OutboxRepositoryInjector implements InjectorInterface
@@ -28,14 +32,23 @@ final class OutboxRepositoryInjector implements InjectorInterface
         ReflectionClass $class,
         Stringable|string|null $context = null,
     ) : OutboxRepository {
+        if (is_string($context) === false) {
+            throw new RuntimeException(sprintf(
+                'Cannot create instance of %s',
+                OutboxRepository::class,
+            ));
+        }
+
+        $domain = $this->config->domain($context);
+
         $database = $this->factory->make(
             DatabaseInterface::class,
-            context: $this->config->outboxDatabase(),
+            context: $domain['database'],
         );
 
         return new CycleOutboxRepository(
             $database,
-            $database->table($this->config->outboxTableName())->getName(),
+            $database->table($domain['outbox']['tableName'])->getName(),
             $this->serializer,
         );
     }

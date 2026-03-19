@@ -130,7 +130,7 @@ final class EventSauceConfigBootloader extends Bootloader
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
-                position: '.',
+                position: sprintf('domains.%s', $config['domain']),
                 key: 'aggregateRoots',
                 value: [],
                 overwrite: false,
@@ -140,7 +140,7 @@ final class EventSauceConfigBootloader extends Bootloader
         $this->configurator->modify(
             EventSauceConfig::CONFIG,
             new Append(
-                position: 'aggregateRoots',
+                position: sprintf('domains.%s.aggregateRoots', $config['domain']),
                 key: $className,
                 value: $config,
             ),

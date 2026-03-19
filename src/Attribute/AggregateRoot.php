@@ -11,7 +11,7 @@ final class AggregateRoot
 {
     public function __construct(
         public readonly string $messageTable,
-        public readonly string $database = 'default',
+        public readonly string $domain = 'default',
         public readonly string|null $name = null,
         public readonly string|null $idClass = null,
         public readonly string|null $repoClass = null,

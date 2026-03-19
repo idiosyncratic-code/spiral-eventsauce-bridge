@@ -8,20 +8,19 @@ use EventSauce\EventSourcing\MessageRepository;
 use EventSauce\MessageOutbox\OutboxRepository;
 use Idiosyncratic\Spiral\EventSauceBridge\Attribute\MessageRepositoryTable;
 use Idiosyncratic\Spiral\EventSauceBridge\CycleMessageRepositoryFactory;
-use Idiosyncratic\Spiral\EventSauceBridge\EventSauceConfig;
 use ReflectionClass;
 use ReflectionParameter;
 use RuntimeException;
 use Spiral\Core\Container\InjectorInterface;
+use Spiral\Core\FactoryInterface;
 use Stringable;
 
 /** @implements InjectorInterface<MessageRepository> */
 final class MessageRepositoryInjector implements InjectorInterface
 {
     public function __construct(
-        private readonly CycleMessageRepositoryFactory $factory,
-        private readonly OutboxRepository|null $outboxRepository,
-        private readonly EventSauceConfig $config,
+        private readonly CycleMessageRepositoryFactory $repositoryFactory,
+        private readonly FactoryInterface $factory,
     ) {
     }
 
@@ -39,10 +38,36 @@ final class MessageRepositoryInjector implements InjectorInterface
 
         $table = $tableAttribute->table;
 
-        return $this->factory->makeMessageRepository(
-            $tableAttribute->database,
-            $tableAttribute->table,
-            $this->config->outboxEnabled() ? $this->outboxRepository : null,
+        $useOutbox = $tableAttribute->useOutbox;
+
+        $outboxTableName = $tableAttribute->outboxTableName;
+
+        $domain = $tableAttribute->domain;
+
+        $outboxRepository = null;
+
+        if ($useOutbox === true) {
+            $outboxRepository = $this->factory->make(
+                OutboxRepository::class,
+                context: $domain,
+            );
+
+            /*
+            $outboxRepository = new CycleOutboxRepository(
+                $this->factory->make(
+                    DatabaseInterface::class,
+                    context: $database,
+                ),
+                $outboxTableName,
+                $this->serializer,
+            );
+            */
+        }
+
+        return $this->repositoryFactory->makeMessageRepository(
+            $database,
+            $table,
+            $outboxRepository,
         );
     }
 }

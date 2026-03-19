@@ -50,11 +50,22 @@ final class EventSauceBootloader extends Bootloader
     }
 
     #[BootMethod]
-    public function generateRepositoryClasses(
+    public function generateRepositoryClassesForDomains(
         EventSauceConfig $config,
         AggregateRootRepositoryFactory $repoFactory,
     ) : void {
-        foreach ($config->aggregateRoots() as $root => $rootConfig) {
+        foreach ($config->domains() as $domainConfig) {
+            $this->generateRepositoryClassesForDomain($config, $domainConfig, $repoFactory);
+        }
+    }
+
+    /** @param array<string, mixed> $domainConfig */
+    private function generateRepositoryClassesForDomain(
+        EventSauceConfig $config,
+        array $domainConfig,
+        AggregateRootRepositoryFactory $repoFactory,
+    ) : void {
+        foreach ($domainConfig['aggregateRoots'] as $root => $rootConfig) {
             if (class_exists($rootConfig['repositoryClass'])) {
                 continue;
             }
@@ -63,26 +74,33 @@ final class EventSauceBootloader extends Bootloader
                 $rootConfig['namespace'],
                 $rootConfig['repositoryClass'],
                 $rootConfig['messageTable'],
-                $rootConfig['database'],
+                $domainConfig['database'],
                 $root,
-                $config->outboxEnabled(),
-                $config->outboxTableName(),
-                $this->getRepositoryDispatcherList($rootConfig['dispatchers'], $config),
+                $domainConfig['outbox']['enabled'],
+                $domainConfig['outbox']['tableName'],
+                $rootConfig['domain'],
+                $this->getRepositoryDispatcherList(
+                    $rootConfig['dispatchers'],
+                    $config,
+                    $domainConfig,
+                ),
                 $rootConfig['decorators'],
             );
         }
     }
 
     /**
-     * @param array<string> $dispatchers
+     * @param array<mixed> $dispatchers
+     * @param array<mixed> $domainConfig
      *
      * @return array<string>
      */
     private function getRepositoryDispatcherList(
         array $dispatchers,
         EventSauceConfig $config,
+        array $domainConfig,
     ) : array {
-        if ($config->outboxEnabled() === false) {
+        if ($domainConfig['outbox']['enabled'] === false) {
             return $dispatchers;
         }
 

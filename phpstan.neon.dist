@@ -7,9 +7,12 @@ parameters:
         -
             identifier: argument.unknown
             paths:
-                - src/Bootloader/OutboxRelayBootloader.php
+                - src/Injector/MessageRepositoryInjector.php
+                - src/Injector/OutboxRelayInjector.php
                 - src/Injector/OutboxRepositoryInjector.php
                 - src/Console/MessageConsumeCommand.php
+                - src/Console/OutboxRelayCommand.php
+
         -
             identifier: property.onlyRead
             paths:

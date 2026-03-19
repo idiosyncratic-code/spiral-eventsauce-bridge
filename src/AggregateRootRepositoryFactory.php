@@ -6,6 +6,7 @@ namespace Idiosyncratic\Spiral\EventSauceBridge;
 
 use Spiral\Boot\DirectoriesInterface;
 
+use function array_merge;
 use function array_pop;
 use function array_reduce;
 use function chmod;
@@ -46,11 +47,7 @@ final class AggregateRootRepositoryFactory
         class <className> extends EventSourcedAggregateRootRepository implements AggregateRootRepository
         {
             public function __construct(
-                #[MessageRepositoryTable(table: '<messageTable>', database: '<database>', useOutbox: <useOutbox>, outboxTableName: '<outboxTableName>')]
-                MessageRepository $messageRepository,
-                <messageDecoratorParameter>
-                ClassNameInflector $classNameInflector,
-                <messageDispatcherParameter>
+                <constructorParameters>
             ) {
                 parent::__construct(
                     aggregateRootClassName: '\<aggregateFQCN>',
@@ -110,12 +107,23 @@ final class AggregateRootRepositoryFactory
         string $aggregateFQCN,
         bool $useOutbox,
         string $outboxTableName,
+        string $domain,
         array $dispatchers,
         array $decorators,
     ) : void {
         if (class_exists($repositoryClass) === true) {
             return;
         }
+
+        $constructorParameters = $this->makeConstructorParameters(
+            $messageTable,
+            $database,
+            ($useOutbox ? 'true' : 'false'),
+            $outboxTableName,
+            $domain,
+            $decorators,
+            $dispatchers,
+        );
 
         $path = explode('\\', $repositoryClass);
 
@@ -132,8 +140,7 @@ final class AggregateRootRepositoryFactory
                 ['aggregateFQCN', $aggregateFQCN],
                 ['useOutbox', ($useOutbox ? 'true' : 'false')],
                 ['outboxTableName', $outboxTableName],
-                ['messageDispatcherParameter', $this->makeMessageDispatcherParameter($dispatchers)],
-                ['messageDecoratorParameter', $this->makeMessageDecoratorParameter($decorators)],
+                ['constructorParameters', $constructorParameters],
             ],
             static function ($classContent, $token) {
                 return str_replace(sprintf('<%s>', $token[0]), $token[1], $classContent);
@@ -160,14 +167,14 @@ final class AggregateRootRepositoryFactory
         require $filename;
     }
 
-    /** @param array<string> $decorators */
+    /**
+     * @param array<string> $decorators
+     *
+     * @return array<string>
+     */
     private function makeMessageDecoratorParameter(
         array $decorators,
-    ) : string {
-        if (empty($decorators)) {
-            return '        MessageDecorator $decorator,';
-        }
-
+    ) : array {
         $paramLines = [];
 
         foreach ($decorators as $decorator) {
@@ -176,15 +183,19 @@ final class AggregateRootRepositoryFactory
 
         $paramLines[] = 'MessageDecorator $decorator,';
 
-        return implode(PHP_EOL . '        ', $paramLines);
+        return $paramLines;
     }
 
-    /** @param array<string> $dispatchers */
+    /**
+     * @param array<string> $dispatchers
+     *
+     * @return array<string>
+     */
     private function makeMessageDispatcherParameter(
         array $dispatchers,
-    ) : string {
+    ) : array {
         if (empty($dispatchers)) {
-            return '        MessageDispatcher $dispatcher,';
+            return [];
         }
 
         $paramLines = [];
@@ -195,6 +206,39 @@ final class AggregateRootRepositoryFactory
 
         $paramLines[] = 'MessageDispatcher $dispatcher,';
 
-        return implode(PHP_EOL . '        ', $paramLines);
+        return $paramLines;
+    }
+
+    /**
+     * @param array<string> $dispatchers
+     * @param array<string> $decorators
+     */
+    private function makeConstructorParameters(
+        string $messageTable,
+        string $database,
+        string $useOutbox,
+        string $outboxTableName,
+        string $domain,
+        array $decorators,
+        array $dispatchers,
+    ) : string {
+        $constructorParameters = array_merge(
+            [
+                sprintf(
+                    "#[MessageRepositoryTable(table: '%s', database: '%s', useOutbox: %s, outboxTableName: '%s', domain: '%s')]",
+                    $messageTable,
+                    $database,
+                    ($useOutbox ? 'true' : 'false'),
+                    $outboxTableName,
+                    $domain,
+                ),
+                'MessageRepository $messageRepository,',
+                'ClassNameInflector $classNameInflector,',
+            ],
+            $this->makeMessageDecoratorParameter($decorators),
+            $this->makeMessageDispatcherParameter($dispatchers),
+        );
+
+        return implode(PHP_EOL . '        ', $constructorParameters);
     }
 }
