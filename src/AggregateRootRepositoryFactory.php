@@ -228,7 +228,7 @@ final class AggregateRootRepositoryFactory
                     "#[MessageRepositoryTable(table: '%s', database: '%s', useOutbox: %s, outboxTableName: '%s', domain: '%s')]",
                     $messageTable,
                     $database,
-                    ($useOutbox ? 'true' : 'false'),
+                    $useOutbox,
                     $outboxTableName,
                     $domain,
                 ),
