@@ -11,9 +11,6 @@ use RuntimeException;
 use Throwable;
 
 use function array_shift;
-use function assert;
-use function call_user_func_array;
-use function is_callable;
 
 final class ChainClassNameInflector implements ClassNameInflector
 {
@@ -69,9 +66,7 @@ final class ChainClassNameInflector implements ClassNameInflector
         }
 
         try {
-            assert(is_callable($inflectorCallable = [$inflector, $method]));
-
-            return call_user_func_array($inflectorCallable, [$classNameOrType]);
+            return $inflector->$method($classNameOrType);
         } catch (Throwable) {
             return $this->inflect($inflectors, $method, $classNameOrType);
         }
