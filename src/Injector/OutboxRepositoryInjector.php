@@ -48,7 +48,7 @@ final class OutboxRepositoryInjector implements InjectorInterface
 
         return new CycleOutboxRepository(
             $database,
-            $database->table($domain['outbox']['tableName'])->getName(),
+            $database->table($domain['outbox']['tableName'])->getFullName(),
             $this->serializer,
         );
     }
