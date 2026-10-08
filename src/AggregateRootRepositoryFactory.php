@@ -28,6 +28,7 @@ final class AggregateRootRepositoryFactory
 
         namespace <namespace>;
 
+        use DomainException;
         use EventSauce\EventSourcing\EventSourcedAggregateRootRepository;
         use EventSauce\EventSourcing\AggregateRootRepository;
         use EventSauce\EventSourcing\AggregateRootId;
